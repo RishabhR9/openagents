@@ -1,0 +1,45 @@
+name: Frontend tests
+
+# The Workspace front end had no test gate on pull requests: the only Python
+# workflow was manual-dispatch, so the front-end suite could rot unnoticed.
+# The desktop bundle build is gated separately by workspace-desktop-bundle.yml;
+# this workflow covers the unit tests and the type check.
+
+on:
+  pull_request:
+    paths:
+      - "workspace/frontend/**"
+      - ".github/workflows/frontend-tests.yml"
+      - ".github/actions/workspace-frontend-deps/**"
+  push:
+    branches: [develop]
+    paths:
+      - "workspace/frontend/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Workspace frontend dependencies
+        uses: ./.github/actions/workspace-frontend-deps
+
+      - name: Unit tests
+        working-directory: workspace/frontend
+        run: npm test
+
+      - name: Type check
+        working-directory: workspace/frontend
+        run: npx tsc --noEmit

@@ -34,6 +34,7 @@ async def wiki_network():
     """Create and start a network with wiki mod using mod_test_workspace_wiki.yaml config."""
     config_path = (
         Path(__file__).parent.parent.parent
+        / "sdk"
         / "examples"
         / "mod_test_workspace_wiki.yaml"
     )

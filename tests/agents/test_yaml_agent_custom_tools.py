@@ -14,7 +14,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 # Add src to Python path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "sdk" / "src"))
 
 from openagents.utils.agent_loader import load_agent_from_yaml
 from openagents.models.agent_config import AgentConfig

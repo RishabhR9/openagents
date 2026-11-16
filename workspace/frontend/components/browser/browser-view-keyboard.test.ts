@@ -20,7 +20,10 @@ const render = () => act(async () => root.render(React.createElement<{ artifactT
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   state.controlling = false; state.input.mockReset(); state.revision = 0;
-  vi.stubGlobal('fetch', vi.fn(async () => new Response(new Blob(['frame'], { type: 'image/jpeg' }))));
+  // Built from bytes, not a jsdom Blob: jsdom's Blob has no .stream(), and
+  // Node's Response constructor requires it (it rejected the Blob with
+  // "object.stream is not a function"), which left the preview unrendered.
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(new Uint8Array([1,2,3]), { headers: { 'content-type': 'image/jpeg' } })));
   vi.stubGlobal('URL', class extends URL { static createObjectURL() { return 'blob:frame'; } static revokeObjectURL() {} });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
   composer = document.createElement('textarea'); document.body.append(composer); composer.focus();

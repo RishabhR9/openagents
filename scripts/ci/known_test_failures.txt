@@ -1,0 +1,85 @@
+# Backend tests that are known to fail.
+#
+# The Workspace backend inherited a set of failing tests. A CI gate that ran
+# pytest plainly would therefore be red forever and would teach everyone to
+# ignore it. scripts/ci/check_known_failures.py reports the entries below
+# separately (in the job summary) and fails the job only for failures that
+# are NOT listed here — so a newly broken test still blocks a pull request.
+#
+# Captured on Windows, Python 3.11, SQLite (no TEST_DATABASE_URL), with the
+# SDK installed via `pip install -e ".[sdk]"`. The backend CI job runs on
+# windows-latest for the same reason. When the job moves to another platform,
+# re-capture this list:
+#
+#   PYTHONPATH=workspace/backend;sdk/src python -m pytest workspace/backend/tests/ \
+#       -q --tb=no -rfE | tee pytest-summary.txt
+#   python scripts/ci/check_known_failures.py --summary pytest-summary.txt \
+#       --known scripts/ci/known_test_failures.txt
+#
+# Node ids are the ones pytest prints when it is run from the repository root.
+# Remove an entry as soon as its test passes again: the checker reports
+# recorded failures that now pass, so a stale list does not hide a real fix.
+
+# ── Behind a feature flag that is off by default ─────────────────────────────
+# The thread-collaboration endpoints answer 403 until THREAD_COLLABORATION_ENABLED
+# is set (the flag ships off for every rollout).
+workspace/backend/tests/test_thread_collaboration.py::test_owner_can_save_but_other_participant_cannot
+
+# ── Needs a real LLM credential ──────────────────────────────────────────────
+# The router decides the addressed agent with a live model call; without
+# ROUTER_LLM_API_KEY (or ANTHROPIC_API_KEY) it defaults to "stop", so the
+# directed agent is never addressed. Cannot pass offline.
+workspace/backend/tests/test_director_rule.py::TestDirectorRule::test_explicit_director_field_wins_over_creator
+
+# ── Broken by the config reload in test_identity_defaults ───────────────────
+# test_identity_defaults calls importlib.reload(app.config), which replaces the
+# module's `config` object for the rest of the session. Every module that
+# imported it earlier keeps the old instance, so a later test's
+# monkeypatch.setattr(config, ...) no longer reaches the code that reads the
+# new object — these tests pass on their own and fail after that module runs.
+# Fixing it means restoring the original object in test_identity_defaults.
+workspace/backend/tests/test_integrations.py::test_oauth_callback_creates_binding
+workspace/backend/tests/test_integrations.py::test_oauth_reinstall_updates_binding_in_place
+workspace/backend/tests/test_integrations.py::test_shared_events_routes_by_team_id
+workspace/backend/tests/test_integrations.py::test_shared_events_unknown_team_ignored
+workspace/backend/tests/test_integrations.py::test_shared_events_bad_signature_rejected
+workspace/backend/tests/test_integrations.py::test_app_uninstalled_disables_binding
+workspace/backend/tests/test_public_shares.py::test_the_viewer_shows_a_clean_name_and_a_link_preview
+
+# ── Expectations left behind by a behaviour change ───────────────────────────
+# Pairing codes now require a signed-in member (the workspace token alone is
+# refused, so a device cannot be paired by anyone holding the link).
+workspace/backend/tests/test_nodes.py::TestDeletedWorkspaceRefusesNodes::test_heartbeat_refused_after_delete
+workspace/backend/tests/test_nodes.py::TestDeletedWorkspaceRefusesNodes::test_command_result_refused_after_delete
+workspace/backend/tests/test_tokenpay.py::test_saved_access_delivers_protocol_specific_endpoint_to_node[claude-https://tokendance.space/gateway]
+workspace/backend/tests/test_tokenpay.py::test_saved_access_delivers_protocol_specific_endpoint_to_node[codex-https://tokendance.space/gateway/v1]
+# The "escalate" approval kind no longer exists.
+workspace/backend/tests/test_escalation.py::TestOwnerRouting::test_unowned_agent_pages_the_workspace
+# Joining through a token link no longer signs a person in.
+workspace/backend/tests/test_workspace_membership.py::TestTeamApi::test_self_join_via_token_link
+# The notification now carries the recipient it was addressed to.
+workspace/backend/tests/test_notify.py::TestNotificationEndpoints::test_list_carries_kind_and_action_ref
+
+# ── The dead-browser recovery path is gone from _ensure_connected ────────────
+# A dead Chromium session answers 503 instead of being reopened, so the
+# recovery expectations (and the URL guard that runs with it) cannot hold.
+workspace/backend/tests/test_production_500_regressions.py::test_browser_recovers_chromium_error_page[screenshot]
+workspace/backend/tests/test_production_500_regressions.py::test_browser_recovers_chromium_error_page[reconnect]
+workspace/backend/tests/test_production_500_regressions.py::test_unsafe_saved_target_returns_400[file:///etc/passwd]
+workspace/backend/tests/test_production_500_regressions.py::test_unsafe_saved_target_returns_400[javascript:alert(1)]
+workspace/backend/tests/test_production_500_regressions.py::test_unsafe_saved_target_returns_400[chrome://settings/]
+workspace/backend/tests/test_production_500_regressions.py::test_unsafe_saved_target_returns_400[http://127.0.0.1/]
+workspace/backend/tests/test_ssrf_boundary.py::TestSharedBrowserRouterRejectsInternal::test_navigate_rejects_internal_url[http://169.254.169.254/latest/meta-data/iam/security-credentials/]
+workspace/backend/tests/test_ssrf_boundary.py::TestSharedBrowserRouterRejectsInternal::test_navigate_rejects_internal_url[http://127.0.0.1:8000/v1/workspaces]
+workspace/backend/tests/test_ssrf_boundary.py::TestSharedBrowserRouterRejectsInternal::test_navigate_rejects_internal_url[file:///etc/passwd]
+# The tab list reports the saved title where the test expects the live one.
+workspace/backend/tests/test_browser_list_concurrency.py::test_tab_list_uses_one_deadline_and_keeps_completed_refreshes
+
+# ── Schema drift between the bootstrap SQL and the migrations ────────────────
+# scripts/insforge-migration/0001_initial_schema.sql is stamped 015 while
+# the Alembic head is 098.
+workspace/backend/tests/test_migration_schema.py::test_models_alembic_and_init_sql_have_the_same_schema_shape
+
+# ── Order-dependent tests (they pass when run on their own) ──────────────────
+# Events seeded inside the same millisecond are ordered by their random id.
+workspace/backend/tests/test_thread_fork.py::test_fork_copies_settings_agents_and_history

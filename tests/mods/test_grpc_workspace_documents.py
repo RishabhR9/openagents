@@ -24,7 +24,7 @@ async def documents_network():
 
     # Load the workspace test configuration
     config_path = (
-        Path(__file__).parent.parent.parent / "examples" / "workspace_test.yaml"
+        Path(__file__).parent.parent.parent / "sdk" / "examples" / "workspace_test.yaml"
     )
 
     # Load config and use different ports to avoid conflicts

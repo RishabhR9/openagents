@@ -309,7 +309,14 @@ def _load_providers_from_files() -> dict[str, ProviderInfo]:
     entries: list[tuple[float, ProviderInfo]] = []
     for f in sorted(d.glob("*.json")):
         try:
-            data = json.loads(f.read_text())
+            # Explicit UTF-8: several catalogues carry non-ASCII copy (the
+            # Chinese descriptions). Reading them with the platform default
+            # codec raised UnicodeDecodeError on Windows, and the `except`
+            # below then dropped that provider silently — Anthropic and six
+            # others vanished from the catalogue, leaving the Claude model
+            # picker empty. The agent registry already reads its files as
+            # UTF-8 (see agent_registry._load_raw); this matches it.
+            data = json.loads(f.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
         name = data.get("name") or f.stem

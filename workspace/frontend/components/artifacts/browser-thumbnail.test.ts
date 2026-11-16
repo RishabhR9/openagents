@@ -19,7 +19,11 @@ beforeEach(()=>{
   });
   create=vi.fn().mockReturnValue('blob:preview'); revoke=vi.fn();
   vi.stubGlobal('URL',class extends URL {static createObjectURL=create;static revokeObjectURL=revoke;});
-  fetchFrame=vi.spyOn(workspaceApi,'fetchBrowserScreenshot').mockImplementation(async()=>new Response(new Blob(['frame'],{type:'image/png'})));
+  // Built from bytes, not a jsdom Blob: jsdom's Blob has no .stream(), and
+  // Node's Response constructor requires it (it rejected the Blob with
+  // "object.stream is not a function"). The component only ever calls
+  // response.blob(), so the payload shape does not matter here.
+  fetchFrame=vi.spyOn(workspaceApi,'fetchBrowserScreenshot').mockImplementation(async()=>new Response(new Uint8Array([1,2,3]),{headers:{'content-type':'image/png'}}));
   host=document.createElement('div');document.body.append(host);root=createRoot(host);
 });
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
@@ -51,7 +55,7 @@ it('hides unavailable thumbnails and recovers when capture succeeds',async()=>{
   expect(host.textContent).toBe('');
   expect(host.firstElementChild?.className).toBe('hidden');
   expect(host.querySelector('img')).toBeNull();
-  fetchFrame.mockResolvedValue(new Response(new Blob(['frame'], {type:'image/png'})));
+  fetchFrame.mockResolvedValue(new Response(new Uint8Array([1,2,3]), {headers:{'content-type':'image/png'}}));
   await act(async()=>vi.advanceTimersByTime(30000));
   expect(host.querySelector('img')).not.toBeNull();
   await act(async()=>host.querySelector('img')!.dispatchEvent(new Event('error')));
@@ -62,7 +66,7 @@ it('hides unavailable thumbnails and recovers when capture succeeds',async()=>{
 });
 it('sends viewer credentials as headers, never in the screenshot URL',async()=>{
   fetchFrame.mockRestore();
-  const fetch=vi.fn().mockResolvedValue(new Response(new Blob(['image'])));
+  const fetch=vi.fn().mockResolvedValue(new Response(new Uint8Array([1,2,3])));
   vi.stubGlobal('fetch',fetch);
   workspaceApi.configure('workspace','workspace-secret','viewer-secret');
   await workspaceApi.fetchBrowserScreenshot('tab');

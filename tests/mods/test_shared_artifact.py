@@ -31,6 +31,7 @@ async def shared_artifact_test_network():
     """Create and start a network with shared artifact mod configured."""
     config_path = (
         Path(__file__).parent.parent.parent
+        / "sdk"
         / "examples"
         / "test_configs"
         / "shared_artifacts.yaml"

@@ -283,3 +283,7 @@ tests/end_to_end/agents.config.json
 
 # Reviewed production dependency constraints
 !workspace/backend/requirements.production.lock
+
+# Artefacts written by the backend test workflow (scripts/ci/check_known_failures.py)
+pytest-report.xml
+pytest-summary.txt

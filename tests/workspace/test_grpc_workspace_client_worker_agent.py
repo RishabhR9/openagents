@@ -158,7 +158,7 @@ class MockWorkerAgent(WorkerAgent):
 async def test_network():
     """Create and start a network using workspace_test.yaml config."""
     config_path = (
-        Path(__file__).parent.parent.parent / "examples" / "workspace_test.yaml"
+        Path(__file__).parent.parent.parent / "sdk" / "examples" / "workspace_test.yaml"
     )
 
     # Load config and use random port to avoid conflicts

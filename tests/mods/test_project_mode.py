@@ -13,7 +13,7 @@ from openagents.models.event import Event
 async def test_project_mod_with_config():
     """Test project mod directly with configuration from project_mode.yaml."""
     # Load the actual project mode config
-    config_path = Path(__file__).parent.parent.parent / "examples" / "test_configs" / "project_mode.yaml"
+    config_path = Path(__file__).parent.parent.parent / "sdk" / "examples" / "test_configs" / "project_mode.yaml"
     
     with open(config_path, 'r') as f:
         config_data = yaml.safe_load(f)
@@ -56,7 +56,7 @@ async def test_project_mod_with_config():
 async def test_project_lifecycle():
     """Test complete project lifecycle."""
     # Load config and set up mod
-    config_path = Path(__file__).parent.parent.parent / "examples" / "test_configs" / "project_mode.yaml"
+    config_path = Path(__file__).parent.parent.parent / "sdk" / "examples" / "test_configs" / "project_mode.yaml"
     
     with open(config_path, 'r') as f:
         config_data = yaml.safe_load(f)
@@ -129,7 +129,7 @@ async def test_project_lifecycle():
 async def test_project_state_management():
     """Test project state management operations."""
     # Load config and set up mod
-    config_path = Path(__file__).parent.parent.parent / "examples" / "test_configs" / "project_mode.yaml"
+    config_path = Path(__file__).parent.parent.parent / "sdk" / "examples" / "test_configs" / "project_mode.yaml"
     
     with open(config_path, 'r') as f:
         config_data = yaml.safe_load(f)
@@ -222,7 +222,7 @@ async def test_project_state_management():
 async def test_project_artifacts():
     """Test project artifact management."""
     # Load config and set up mod
-    config_path = Path(__file__).parent.parent.parent / "examples" / "test_configs" / "project_mode.yaml"
+    config_path = Path(__file__).parent.parent.parent / "sdk" / "examples" / "test_configs" / "project_mode.yaml"
     
     with open(config_path, 'r') as f:
         config_data = yaml.safe_load(f)
@@ -302,7 +302,7 @@ async def test_permission_system():
     strict authorization.
     """
     # Load config and set up mod
-    config_path = Path(__file__).parent.parent.parent / "examples" / "test_configs" / "project_mode.yaml"
+    config_path = Path(__file__).parent.parent.parent / "sdk" / "examples" / "test_configs" / "project_mode.yaml"
     
     with open(config_path, 'r') as f:
         config_data = yaml.safe_load(f)

@@ -1,0 +1,72 @@
+name: Backend tests
+
+# The Workspace backend had no test gate on pull requests: .github/workflows/
+# pytest.yml is manual-dispatch only, so failures accumulated on develop.
+#
+# The suite is not green yet — it carries a set of recorded failures (stale
+# expectations, tests behind a feature flag, tests that need an external
+# credential or a browser). Those live in scripts/ci/known_test_failures.txt
+# and are reported separately; the job fails only for failures nobody has
+# recorded yet, so the gate is useful without being permanently red.
+#
+# The recorded list was captured on Windows (where the platform-specific
+# defects it contains actually reproduce). When this job moves to Linux, or
+# when a recorded failure is fixed, re-capture the list — see
+# scripts/ci/known_test_failures.txt.
+
+on:
+  pull_request:
+    paths:
+      - "workspace/backend/**"
+      - "sdk/src/**"
+      - "scripts/ci/**"
+      - "pyproject.toml"
+      - ".github/workflows/backend-tests.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "workspace/backend/**"
+      - "sdk/src/**"
+      - "scripts/ci/**"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Windows, because the recorded failure list was captured here.
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pytest-aiohttp pytest-mock
+          pip install -e .
+          pip install -r workspace/backend/requirements.txt
+
+      - name: Run backend tests
+        shell: pwsh
+        env:
+          PYTHONPATH: workspace/backend;sdk/src
+        run: |
+          # pytest exits non-zero while recorded failures remain; the checker
+          # below decides the verdict, so the run itself must not abort here.
+          $status = 0
+          python -m pytest workspace/backend/tests/ -q --tb=no -rfE --junitxml=pytest-report.xml > pytest-summary.txt 2>&1
+          $status = $LASTEXITCODE
+          "pytest exit status: $status" | Out-File -Append -Encoding utf8 pytest-summary.txt
+          Get-Content pytest-summary.txt -Tail 80
+
+      - name: Check the run against the known-failures list
+        run: python scripts/ci/check_known_failures.py --summary pytest-summary.txt --junit pytest-report.xml --known scripts/ci/known_test_failures.txt

@@ -366,6 +366,19 @@ def _html(body: str, status: int = 200) -> Response:
         "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow", **_NO_REFERRER})
 
 
+def _format_share_date(d, lang: str) -> str:
+    """The date a shared page shows, in a form every platform can render.
+
+    `%-d` (the day without a leading zero) is a GNU/BSD extension: Windows'
+    strftime raises `ValueError: Invalid format string` on it, which turned the
+    whole shared-link page into a 500 there. Formatting the day by hand keeps
+    the exact same output ("Nov 6, 2026") everywhere.
+    """
+    if lang == "zh":
+        return d.strftime("%Y-%m-%d")
+    return f"{d.strftime('%b')} {d.day}, {d.year}"
+
+
 @router.api_route("/public/shares/{token}/view", methods=["GET", "HEAD"])
 def public_share_view(token: str, request: Request, db: Session = Depends(get_db)):
     """The page a public link opens. Only on the share domain: it shows what
@@ -380,7 +393,8 @@ def public_share_view(token: str, request: Request, db: Session = Depends(get_db
     data = _read(link.storage_key) if share_viewer.renders_from_bytes(link) else None
     if share_viewer.renders_from_bytes(link) and data is None:
         return _html(share_viewer.error_page("", lang), 404)
-    fmt = (lambda d: d.strftime("%Y-%m-%d")) if lang == "zh" else (lambda d: d.strftime("%b %-d, %Y"))
+    def fmt(d):
+        return _format_share_date(d, lang)
     return _html(share_viewer.page(link, data, lang, fmt))
 
 

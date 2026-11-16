@@ -25,7 +25,7 @@ from openagents.utils.password_utils import hash_password
 async def announcement_test_network():
     """Create and start a network with thread messaging mod and admin group configured."""
     config_path = (
-        Path(__file__).parent.parent.parent / "examples" / "workspace_test.yaml"
+        Path(__file__).parent.parent.parent / "sdk" / "examples" / "workspace_test.yaml"
     )
 
     # Load config and use random port to avoid conflicts

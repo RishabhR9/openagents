@@ -48,13 +48,13 @@ def skip_without_api_key(reason: str = "Requires LLM API key (OPENAI_API_KEY or 
 @pytest.fixture
 def hello_world_network_config_path() -> Path:
     """Get path to the Hello World demo network configuration."""
-    return Path(__file__).parent.parent.parent / "demos" / "00_hello_world" / "network.yaml"
+    return Path(__file__).parent.parent.parent / "sdk" / "demos" / "00_hello_world" / "network.yaml"
 
 
 @pytest.fixture
 def hello_world_agent_config_path() -> Path:
     """Get path to the Hello World demo Charlie agent configuration."""
-    return Path(__file__).parent.parent.parent / "demos" / "00_hello_world" / "agents" / "charlie.yaml"
+    return Path(__file__).parent.parent.parent / "sdk" / "demos" / "00_hello_world" / "agents" / "charlie.yaml"
 
 
 @pytest.fixture

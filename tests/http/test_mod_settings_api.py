@@ -18,7 +18,7 @@ from openagents.launchers.network_launcher import load_network_config
 async def test_network():
     """Create and start a network with HTTP transport."""
     config_path = (
-        Path(__file__).parent.parent.parent / "examples" / "workspace_test.yaml"
+        Path(__file__).parent.parent.parent / "sdk" / "examples" / "workspace_test.yaml"
     )
 
     # Load config and use random port to avoid conflicts

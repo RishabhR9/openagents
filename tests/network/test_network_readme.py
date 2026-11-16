@@ -220,7 +220,7 @@ async def test_readme_with_unicode_content(temp_workspace):
 @pytest.mark.asyncio
 async def test_readme_from_yaml_config():
     """Test loading README from YAML config file with network_profile."""
-    config_path = Path(__file__).parent.parent.parent / "examples" / "test_configs" / "network_readme.yaml"
+    config_path = Path(__file__).parent.parent.parent / "sdk" / "examples" / "test_configs" / "network_readme.yaml"
 
     if not config_path.exists():
         pytest.skip(f"Test config not found: {config_path}")

@@ -34,7 +34,7 @@ from openagents.models.transport import TransportType
 
 
 # Test configuration path
-TEST_CONFIG_PATH = Path(__file__).parent.parent.parent / "examples" / "test_configs" / "mcp_tools_test"
+TEST_CONFIG_PATH = Path(__file__).parent.parent.parent / "sdk" / "examples" / "test_configs" / "mcp_tools_test"
 
 
 @asynccontextmanager

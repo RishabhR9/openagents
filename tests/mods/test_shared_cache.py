@@ -29,6 +29,7 @@ async def shared_cache_test_network():
     """Create and start a network with shared cache mod configured."""
     config_path = (
         Path(__file__).parent.parent.parent
+        / "sdk"
         / "examples"
         / "test_configs"
         / "test_shared_cache.yaml"
