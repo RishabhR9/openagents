@@ -11,17 +11,31 @@ _verify_workspace_access grants that email full access.
 """
 
 import importlib
-import os
 
 
 def _fresh_config(monkeypatch, **env):
-    """Re-import the config module with a controlled environment."""
+    """Re-import the config module with a controlled environment.
+
+    Reloading the module replaces its module-level `config` object. Every
+    module that imported it earlier keeps the OLD instance, so a later test's
+    `monkeypatch.setattr(config, ...)` lands on the stale one and never
+    reaches the code that reads the new object. That leak broke the share
+    viewer and the Slack integration tests further down the session: they
+    passed on their own and failed only because this module ran first.
+
+    The original object is put back, so only this helper sees the reloaded
+    configuration and the rest of the session is unaffected.
+    """
     for key in ("FIREBASE_PROJECT_ID", "APPLE_CLIENT_IDS"):
         monkeypatch.delenv(key, raising=False)
     for key, value in env.items():
         monkeypatch.setenv(key, value)
     import app.config as config_module
-    return importlib.reload(config_module).config
+    original = config_module.config
+    try:
+        return importlib.reload(config_module).config
+    finally:
+        config_module.config = original
 
 
 def test_firebase_project_id_defaults_to_empty(monkeypatch):

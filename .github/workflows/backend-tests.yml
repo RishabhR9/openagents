@@ -9,6 +9,12 @@ name: Backend tests
 # and are reported separately; the job fails only for failures nobody has
 # recorded yet, so the gate is useful without being permanently red.
 #
+# The verdict comes from scripts/ci/check_known_failures.py, which is given
+# BOTH the pytest output and pytest's own exit status: a missing, empty or
+# truncated summary is a failed gate, not a green one, and an exit status that
+# means "the run broke" (2 interrupted, 3 internal error, 4 usage error, 5
+# nothing collected) is never read as "no failures".
+#
 # The recorded list was captured on Windows (where the platform-specific
 # defects it contains actually reproduce). When this job moves to Linux, or
 # when a recorded failure is fixed, re-capture the list — see
@@ -55,6 +61,11 @@ jobs:
           pip install -e .
           pip install -r workspace/backend/requirements.txt
 
+      - name: Test the CI checker itself
+        # The checker decides whether a pull request may land, so its own
+        # failure modes are covered here rather than discovered in anger.
+        run: python -m pytest scripts/ci/test_check_known_failures.py -q
+
       - name: Run backend tests
         shell: pwsh
         env:
@@ -62,11 +73,33 @@ jobs:
         run: |
           # pytest exits non-zero while recorded failures remain; the checker
           # below decides the verdict, so the run itself must not abort here.
-          $status = 0
-          python -m pytest workspace/backend/tests/ -q --tb=no -rfE --junitxml=pytest-report.xml > pytest-summary.txt 2>&1
+          # Its exit status is captured and handed to the checker — it is part
+          # of the verdict, not a detail.
+          #
+          # PowerShell 7.3+ turns a non-zero exit code of a native command
+          # into a terminating error when $PSNativeCommandUseErrorActionPreference
+          # is on (it is, by default). Left alone, the run would kill the step
+          # before the checker ever saw the output and the job would be red
+          # even when every failure is a recorded one.
+          $ErrorActionPreference = 'Continue'
+          $PSNativeCommandUseErrorActionPreference = $false
+          python -m pytest workspace/backend/tests/ -q --tb=no -rfE `
+            -o junit_family=xunit1 `
+            --junitxml=pytest-report.xml > pytest-summary.txt 2>&1
           $status = $LASTEXITCODE
           "pytest exit status: $status" | Out-File -Append -Encoding utf8 pytest-summary.txt
+          # The bare number, on its own: the checker parses this as an integer.
+          # ASCII so no byte-order mark can end up in front of it.
+          Set-Content -Path pytest-exit-code.txt -Value $status -Encoding ascii
           Get-Content pytest-summary.txt -Tail 80
 
       - name: Check the run against the known-failures list
-        run: python scripts/ci/check_known_failures.py --summary pytest-summary.txt --junit pytest-report.xml --known scripts/ci/known_test_failures.txt
+        shell: pwsh
+        run: |
+          $status = (Get-Content pytest-exit-code.txt).Trim()
+          python scripts/ci/check_known_failures.py `
+            --summary pytest-summary.txt `
+            --junit pytest-report.xml `
+            --known scripts/ci/known_test_failures.txt `
+            --pytest-exit-code $status `
+            --pytest-rootdir workspace/backend
